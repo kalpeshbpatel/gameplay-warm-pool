@@ -2,13 +2,18 @@ import time
 import boto3
 import math
 import os
+import logging
 from kubernetes import client, config
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 # Load in-cluster Kubernetes config (EKS Service Account)
 try:
     config.load_incluster_config()
 except config.ConfigException:
-    print("Error: Cannot load in-cluster Kubernetes configuration")
+    logger.error("Cannot load in-cluster Kubernetes configuration")
     exit(1)
 
 # AWS Configuration (Using IAM Role for Service Account)
@@ -30,80 +35,57 @@ PRE_WARM_MIN_MEMORY = int(os.getenv("PRE_WARM_MIN_MEMORY", 2048))  # Minimum Mem
 
 # Scaling Configuration
 SLEEP_INTERVAL = int(os.getenv("SLEEP_INTERVAL", 15))  # Interval in seconds to check pod count
-SCALE_DOWN_WAIT_TIME = int(os.getenv("SCALE_DOWN_WAIT_TIME", 120))  # Wait time in seconds before applying scale down
+SCALE_DOWN_WAIT_TIME = int(os.getenv("SCALE_DOWN_WAIT_TIME", 120))  # Wait time before scaling down
 
-# Create EKS client using default IAM role (via service account)
+# Create EKS client using IAM role
 session = boto3.Session()
 eks_client = session.client("eks", region_name=REGION)
 
-# Downscale timer tracking
 downscale_start_time = None
 
 def get_current_desired_size():
-    """Fetches the current desired size of the EKS node group."""
     try:
         response = eks_client.describe_nodegroup(clusterName=CLUSTER_NAME, nodegroupName=NODEGROUP_NAME)
         desired_size = response["nodegroup"]["scalingConfig"]["desiredSize"]
-        print(f"Current desired size from EKS: {desired_size}")
+        logger.info(f"Current desired size from EKS: {desired_size}")
         return desired_size
     except Exception as e:
-        print(f"Error fetching EKS node group details: {e}")
-        return 1  # Default to 1 if unable to fetch
-
+        logger.error(f"Error fetching EKS node group details: {e}")
+        return 1
 
 def get_pod_count():
-    """Fetches the count of pods matching the defined prefix in the specified namespace."""
     v1 = client.CoreV1Api()
     try:
         pods = v1.list_namespaced_pod(namespace=NAMESPACE)
         filtered_pods = [p.metadata.name for p in pods.items if p.metadata.name.startswith(POD_PREFIX)]
         return len(filtered_pods)
     except Exception as e:
-        print(f"Error fetching pods: {e}")
+        logger.error(f"Error fetching pods: {e}")
         return 0
 
-
 def update_eks_nodegroup(desired_size):
-    """Updates only the desired size of the EKS node group."""
-    print(f"Updating EKS node group '{NODEGROUP_NAME}' in cluster '{CLUSTER_NAME}':")
-    print(f"  - New Desired Size: {desired_size}")
-
+    logger.info(f"Updating EKS node group '{NODEGROUP_NAME}' to desired size: {desired_size}")
     try:
         response = eks_client.update_nodegroup_config(
             clusterName=CLUSTER_NAME,
             nodegroupName=NODEGROUP_NAME,
-            scalingConfig={"desiredSize": desired_size}  # Only updating desiredSize
+            scalingConfig={"desiredSize": desired_size}
         )
-        print(f"Update request sent successfully: {response}")
+        logger.info(f"Update request successful: {response}")
     except Exception as e:
-        print(f"Error updating EKS node group: {e}")
-
+        logger.error(f"Error updating EKS node group: {e}")
 
 def calculate_desired_size(pod_count, current_desired_size):
-    """Calculates the new desired size based on CPU and memory requirements."""
     required_cpu = (pod_count * POD_CPU_LIMIT) + PRE_WARM_MIN_CPU
     required_memory = (pod_count * POD_MEMORY_LIMIT) + PRE_WARM_MIN_MEMORY
-
     desired_size_cpu = math.ceil(required_cpu / SERVER_CPU)
     desired_size_memory = math.ceil(required_memory / SERVER_MEMORY)
-
     new_desired_size = max(desired_size_cpu, desired_size_memory)
-
     if new_desired_size != current_desired_size:
-        print("\n=== Desired Size Calculation ===")
-        print(f"  - Namespace: {NAMESPACE}")
-        print(f"  - Pod Prefix: {POD_PREFIX}")
-        print(f"  - Pod Count: {pod_count}")
-        print(f"  - Required CPU: {required_cpu} cores")
-        print(f"  - Required Memory: {required_memory} MB")
-        print(f"  - Desired Size based on CPU: {desired_size_cpu}")
-        print(f"  - Desired Size based on Memory: {desired_size_memory}")
-        print(f"  - Current Desired Size: {current_desired_size}")
-        print(f"  - Final New Desired Size: {new_desired_size}")
-        print("================================\n")
-
+        logger.info(f"Pod Count: {pod_count}, Required CPU: {required_cpu}, Required Memory: {required_memory}")
+        logger.info(f"Desired Size (CPU): {desired_size_cpu}, Desired Size (Memory): {desired_size_memory}")
+        logger.info(f"New Desired Size: {new_desired_size}, Current Desired Size: {current_desired_size}")
     return new_desired_size
-
 
 def main():
     global downscale_start_time
@@ -111,36 +93,28 @@ def main():
         while True:
             current_desired_size = get_current_desired_size()
             pod_count = get_pod_count()
-            print(f"Found {pod_count} pods in namespace {NAMESPACE}")
-
+            logger.info(f"Found {pod_count} pods in namespace {NAMESPACE}")
             new_desired_size = calculate_desired_size(pod_count, current_desired_size)
-
             if new_desired_size < current_desired_size:
                 if downscale_start_time is None:
-                    downscale_start_time = time.time()  # Start timer
-                    print(f"New desired size {new_desired_size} is less than current {current_desired_size}. Waiting for {SCALE_DOWN_WAIT_TIME} seconds before applying...")
+                    downscale_start_time = time.time()
+                    logger.info(f"Waiting {SCALE_DOWN_WAIT_TIME} seconds before applying scale down...")
                 else:
                     elapsed_time = time.time() - downscale_start_time
                     remaining_time = int(SCALE_DOWN_WAIT_TIME - elapsed_time)
-
                     if remaining_time > 0:
-                        print(f"Scaling down in {remaining_time} seconds...")
-
+                        logger.info(f"Scaling down in {remaining_time} seconds...")
                     if elapsed_time >= SCALE_DOWN_WAIT_TIME:
-                        print(f"Applying downscale to {new_desired_size} after waiting for {SCALE_DOWN_WAIT_TIME} seconds.")
+                        logger.info(f"Applying downscale to {new_desired_size} after waiting {SCALE_DOWN_WAIT_TIME} seconds.")
                         update_eks_nodegroup(new_desired_size)
-                        downscale_start_time = None  # Reset timer
+                        downscale_start_time = None
             else:
                 if new_desired_size > current_desired_size:
                     update_eks_nodegroup(new_desired_size)
-
-                # Reset timer when upscaling or no change
                 downscale_start_time = None
-
-            time.sleep(SLEEP_INTERVAL)  # Recalculate every SLEEP_INTERVAL seconds
+            time.sleep(SLEEP_INTERVAL)
     except KeyboardInterrupt:
-        print("\nScript interrupted. Exiting gracefully...")
-
+        logger.info("Script interrupted. Exiting gracefully...")
 
 if __name__ == "__main__":
     main()
