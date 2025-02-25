@@ -2,11 +2,9 @@
 FROM python:3.9
 
 # Set default environment variables
-ENV AWS_PROFILE=scarfall-dev
 ENV REGION=ap-south-1
 ENV CLUSTER_NAME=scarfall-dev
 ENV NODEGROUP_NAME=sf2-warmpool-20250225174150032500000002
-ENV KUBECONFIG_PATH=/app/scarfall-dev.kubeconfig
 ENV NAMESPACE=sf2-instance
 ENV POD_PREFIX=ubuntu
 
