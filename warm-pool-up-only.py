@@ -32,7 +32,8 @@ PRE_WARM_MIN_MEMORY = int(os.getenv("PRE_WARM_MIN_MEMORY", 2048))  # Minimum Mem
 SLEEP_INTERVAL = int(os.getenv("SLEEP_INTERVAL", 15))  # Interval in seconds to check pod count
 
 # Create EKS client using default IAM role (via service account)
-eks_client = boto3.client("eks", region_name=REGION)
+session = boto3.Session()
+eks_client = session.client("eks", region_name=REGION)
 
 
 def get_current_desired_size():

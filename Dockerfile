@@ -29,13 +29,13 @@ ENV SCRIPT_MODE=up-only
 WORKDIR /app
 
 # Copy scripts and dependencies
-COPY warm-pool-up-only.py warm-pool-up-down.py requirements.txt ./
+COPY requirements.txt ./
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy kubeconfig (optional, if provided during build)
-#COPY scarfall-dev.kubeconfig /app/scarfall-dev.kubeconfig
+# Copy Script
+COPY warm-pool-up-only.py warm-pool-up-down.py ./
 
 # Determine which script to run
 CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}.py"]

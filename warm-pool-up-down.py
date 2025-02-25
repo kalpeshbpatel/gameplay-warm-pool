@@ -33,7 +33,8 @@ SLEEP_INTERVAL = int(os.getenv("SLEEP_INTERVAL", 15))  # Interval in seconds to 
 SCALE_DOWN_WAIT_TIME = int(os.getenv("SCALE_DOWN_WAIT_TIME", 120))  # Wait time in seconds before applying scale down
 
 # Create EKS client using default IAM role (via service account)
-eks_client = boto3.client("eks", region_name=REGION)
+session = boto3.Session()
+eks_client = session.client("eks", region_name=REGION)
 
 # Downscale timer tracking
 downscale_start_time = None
