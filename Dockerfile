@@ -36,4 +36,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY warm-pool-up-only.py warm-pool-up-down.py ./
 
 # Determine which script to run
-CMD ["sh", "-c", "python warm-pool-up-only.py"]
+CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}.py"]
