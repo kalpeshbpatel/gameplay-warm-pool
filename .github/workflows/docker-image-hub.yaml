@@ -1,4 +1,4 @@
-name: Build and Push Python App Docker Image Docker Hub
+name: Build and Push Docker Image to Docker Hub
 
 on:
   push:
@@ -37,7 +37,9 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           TIMESTAMP=$(date +%s)
           TAG="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
+          LATEST_TAG="${BRANCH_NAME}-latest"
           echo "IMAGE_TAG=${TAG}" >> $GITHUB_ENV
+          echo "BRANCH_LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
           echo "Generated Tag: ${TAG}"
 
       - name: Set up QEMU for Multi-Arch Build
@@ -58,20 +60,21 @@ jobs:
           context: .
           push: true
           tags: |
-            kbpatel/gameplay-warm-pool:latest
-            kbpatel/gameplay-warm-pool:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.BRANCH_LATEST_TAG }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           platforms: |
             linux/amd64
-          cache-from: type=registry,ref=kbpatel/gameplay-warm-pool:latest
+            linux/arm64
+          cache-from: type=registry,ref=${{ secrets.DOCKER_IMAGE_NAME }}:latest
           cache-to: type=inline
       
       - name: Send Notification to Microsoft Teams
         if: success()
         run: |
-          REPO_URL="docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/gameplay-warm-pool"
+          REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **${{ env.IMAGE_TAG }}**, **latest** \n
+          - **Tags:** **${{ env.IMAGE_TAG }}**, **${{ env.BRANCH_LATEST_TAG }}** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
           - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
