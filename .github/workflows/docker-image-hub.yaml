@@ -75,15 +75,17 @@ jobs:
     if: success()
 
     steps:
+      - name: Set Environment Variables
+        run: |
+          echo "IMAGE_TAG=${{ needs.set-build-vars.outputs.image_tag }}" >> $GITHUB_ENV
+          echo "BRANCH_LATEST_TAG=${{ needs.set-build-vars.outputs.branch_latest_tag }}" >> $GITHUB_ENV
+
       - name: Send Notification to Microsoft Teams
-        env:
-          IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
-          BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
         run: |
           REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **${IMAGE_TAG}**, **${BRANCH_LATEST_TAG}** \n
+          - **Tags:** **$IMAGE_TAG**, **$BRANCH_LATEST_TAG** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
           - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"

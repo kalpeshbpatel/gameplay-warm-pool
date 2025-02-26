@@ -123,23 +123,24 @@ jobs:
 
   send-notification:
     runs-on: ubuntu-latest
-    needs: create-manifest
-    env:
-      BUILD_ID: ${{ needs.set-build-vars.outputs.build_id }}
-      BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
-      ECR_REGISTRY: ${{ needs.set-build-vars.outputs.ecr_registry }}
-
+    needs: [set-build-vars, create-manifest]
     steps:
+      - name: Set Environment Variables
+        run: |
+          echo "BUILD_ID=${{ needs.set-build-vars.outputs.build_id }}" >> $GITHUB_ENV
+          echo "BRANCH_LATEST_TAG=${{ needs.set-build-vars.outputs.branch_latest_tag }}" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=${{ needs.set-build-vars.outputs.ecr_registry }}" >> $GITHUB_ENV
+
       - name: Send Notification to Microsoft Teams
         if: success()
         run: |
           REPO_URL="${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
+          - **Tags:** **$BUILD_ID**, **$BRANCH_LATEST_TAG** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
-          - **GitHub Actions Run** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           
           PAYLOAD="{\"text\": \"${MESSAGE}\" }"
           
