@@ -64,3 +64,19 @@ jobs:
             linux/amd64
           cache-from: type=registry,ref=kbpatel/gameplay-warm-pool:latest
           cache-to: type=inline
+      
+      - name: Send Notification to Microsoft Teams
+        if: success()
+        run: |
+          MESSAGE="### 🚀 Docker Image Successfully Built and Pushed \n
+          - Repository: kbpatel/gameplay-warm-pool \n
+          - Tags: latest, ${{ env.IMAGE_TAG }} \n
+          - Branch: ${{ github.ref_name }} \n
+          - Commit: ${{ github.sha }} \n
+          - [GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          
+          PAYLOAD="{\"text\": \"${MESSAGE}\" }"
+          
+          curl -H "Content-Type: application/json" \
+               -d "${PAYLOAD}" \
+               ${{ secrets.TEAMS_WEBHOOK_URL }}
