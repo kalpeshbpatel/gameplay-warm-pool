@@ -72,7 +72,9 @@ jobs:
           
           docker buildx build --push --platform linux/${ARCH} . \
             -t ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${ARCH}-${BUILD_ID} \
-            --build-arg ARCH=${ARCH}
+            --build-arg ARCH=${ARCH} \
+            --cache-from type=registry,ref=${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:cache-${ARCH} \
+            --cache-to type=registry,ref=${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:cache-${ARCH},mode=max
 
   create-manifest:
     runs-on: ubuntu-latest
