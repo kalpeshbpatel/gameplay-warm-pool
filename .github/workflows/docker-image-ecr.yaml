@@ -49,9 +49,11 @@ jobs:
 
       - name: Get AWS ECR Login Token
         run: |
-          echo "ECR_REGISTRY=https://${{ secrets.ECR_REGISTRY }}" >> $GITHUB_ENV
-          echo "Using ECR Registry: ${{ secrets.ECR_REGISTRY }}"
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+          ECR_REGISTRY="148761651852.dkr.ecr.ap-south-1.amazonaws.com"
+          echo "ECR_REGISTRY=${ECR_REGISTRY}" >> $GITHUB_ENV
+          echo "Using ECR Registry: ${ECR_REGISTRY}"
+
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
       - name: Set up QEMU for Multi-Arch Build
         uses: docker/setup-qemu-action@v3
