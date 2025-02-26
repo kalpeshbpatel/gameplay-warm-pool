@@ -36,9 +36,12 @@ jobs:
           BRANCH_NAME=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
           SHORT_SHA=$(git rev-parse --short HEAD)
           TIMESTAMP=$(date +%s)
-          TAG="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
-          echo "IMAGE_TAG=${TAG}" >> $GITHUB_ENV
-          echo "Generated Tag: ${TAG}"
+          BUILD_ID="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
+          BRANCH_LATEST_TAG="${BRANCH_NAME}-latest"
+          echo "BUILD_ID=${BUILD_ID}" >> $GITHUB_ENV
+          echo "BRANCH_LATEST_TAG=${BRANCH_LATEST_TAG}" >> $GITHUB_ENV
+          echo "Generated Tag: ${BUILD_ID}"
+          echo "Branch Latest Tag: ${BRANCH_LATEST_TAG}"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -52,7 +55,7 @@ jobs:
           ECR_REGISTRY="148761651852.dkr.ecr.ap-south-1.amazonaws.com"
           echo "ECR_REGISTRY=${ECR_REGISTRY}" >> $GITHUB_ENV
           echo "Using ECR Registry: ${ECR_REGISTRY}"
-
+          
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
       - name: Set up QEMU for Multi-Arch Build
@@ -61,16 +64,34 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push Docker Image to ECR
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          platforms: |
-            linux/amd64
-            linux/arm64
-          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
-          cache-to: type=inline
+      - name: Build and Push Docker Images for Each Architecture
+        run: |
+          for ARCH in 'amd64' 'arm64'; do
+            echo "Building for $ARCH..."
+            docker buildx build --load --platform linux/${ARCH} . \
+              -t ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${ARCH}-${BUILD_ID} \
+              --build-arg ARCH=${ARCH}
+          done
+
+          for ARCH in 'amd64' 'arm64'; do
+            echo "Pushing image for $ARCH..."
+            docker push ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${ARCH}-${BUILD_ID}
+          done
+
+      - name: Create and Push Multi-Arch Manifest
+        run: |
+          echo "Creating manifest for ${BUILD_ID}..."
+          docker manifest create ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${BUILD_ID} \
+            ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:amd64-${BUILD_ID} \
+            ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:arm64-${BUILD_ID}
+
+          docker manifest push ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${BUILD_ID}
+
+      - name: Create and Push Branch Latest Multi-Arch Tag
+        run: |
+          echo "Creating latest manifest for branch: ${BRANCH_LATEST_TAG}..."
+          docker manifest create ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${BRANCH_LATEST_TAG} \
+            ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:amd64-${BUILD_ID} \
+            ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:arm64-${BUILD_ID}
+
+          docker manifest push ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${BRANCH_LATEST_TAG}
