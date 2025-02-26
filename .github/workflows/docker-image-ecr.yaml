@@ -49,10 +49,6 @@ jobs:
 
       - name: Get AWS ECR Login Token
         run: |
-          ECR_REGISTRY=$(aws ecr describe-repositories --query 'repositories[0].repositoryUri' --output text)
-          echo "ECR_REGISTRY=${ECR_REGISTRY}" >> $GITHUB_ENV
-          echo "Using ECR Registry: ${ECR_REGISTRY}"
-
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
 
       - name: Set up QEMU for Multi-Arch Build
@@ -67,9 +63,9 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           platforms: |
             linux/amd64
-          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          cache-from: type=registry,ref=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
           cache-to: type=inline
