@@ -131,7 +131,7 @@ jobs:
         if: success()
         run: |
           REPO_SERVER="{ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}"
-          MESSAGE="## 🚀 Multi-Arch Docker Image Successfully Built and Pushed to ECR \n
+          MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${{ secrets.ECR_REPOSITORY }} \n
           - **Registry:** ${REPO_SERVER} \n
           - **Tags:** **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
