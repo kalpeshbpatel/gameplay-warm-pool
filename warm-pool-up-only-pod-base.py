@@ -111,7 +111,7 @@ def main():
             # Only scale up, never scale down
             if new_desired_size > current_desired_size:
                 update_eks_nodegroup(new_desired_size)
-                logging.info("\Wait for 60 Sec...")
+                logging.info("\nWait for 60 Sec...")
                 time.sleep(60)
 
             time.sleep(SLEEP_INTERVAL)
