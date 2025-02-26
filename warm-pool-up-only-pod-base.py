@@ -89,6 +89,7 @@ def calculate_desired_size(pod_count, current_desired_size):
         logging.info(f"  - Namespace: {NAMESPACE}")
         logging.info(f"  - Pod Prefix: {POD_PREFIX}")
         logging.info(f"  - Pod Count: {pod_count}")
+        logging.info(f"  - Warm Pod Count: {PRE_WARM_POD_SIZE}")
         logging.info(f"  - Pods per Server: {pod_per_server}")
         logging.info(f"  - Current Desired Size: {current_desired_size}")
         logging.info(f"  - Final New Desired Size: {new_desired_size}")
