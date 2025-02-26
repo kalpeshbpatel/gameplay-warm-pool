@@ -67,7 +67,7 @@ jobs:
           cache-to: type=inline
 
   send-notification:
-    needs: create-manifest
+    needs: build-and-push
     runs-on: ubuntu-latest
     if: success()
 
