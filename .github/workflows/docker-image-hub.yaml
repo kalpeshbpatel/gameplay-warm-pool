@@ -68,9 +68,9 @@ jobs:
       - name: Send Notification to Microsoft Teams
         if: success()
         run: |
-          REPO_SERVER="docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/gameplay-warm-pool"
+          REPO_URL="docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/gameplay-warm-pool"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
-          - **Repository:** kbpatel/gameplay-warm-pool \n
+          - **Repository:** ${REPO_URL} \n
           - **Tags:** **${{ env.IMAGE_TAG }}**, **latest** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
