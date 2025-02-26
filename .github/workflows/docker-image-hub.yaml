@@ -10,7 +10,7 @@ jobs:
   set-build-vars:
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.vars.outputs.image_tag }}
+      build_id: ${{ steps.vars.outputs.image_tag }}
       branch_latest_tag: ${{ steps.vars.outputs.branch_latest_tag }}
     
     steps:
@@ -56,7 +56,7 @@ jobs:
 
       - name: Build and Push Docker Image
         env:
-          IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
+          IMAGE_TAG: ${{ needs.set-build-vars.outputs.build_id }}
           BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
         uses: docker/build-push-action@v5
         with:
@@ -77,15 +77,16 @@ jobs:
     steps:
       - name: Set Environment Variables
         run: |
-          echo "IMAGE_TAG=${{ needs.set-build-vars.outputs.image_tag }}" >> $GITHUB_ENV
+          echo "BUILD_ID=${{ needs.set-build-vars.outputs.build_id }}" >> $GITHUB_ENV
           echo "BRANCH_LATEST_TAG=${{ needs.set-build-vars.outputs.branch_latest_tag }}" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=148761651852.dkr.ecr.ap-south-1.amazonaws.com" >> $GITHUB_ENV
 
       - name: Send Notification to Microsoft Teams
         run: |
           REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **$IMAGE_TAG**, **$BRANCH_LATEST_TAG** \n
+          - **Tags:** **$BUILD_ID**, **$BRANCH_LATEST_TAG** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
           - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
