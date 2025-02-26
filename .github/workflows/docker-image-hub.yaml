@@ -25,10 +25,13 @@ jobs:
           TIMESTAMP=$(date +%s)
           TAG="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
           LATEST_TAG="${BRANCH_NAME}-latest"
+          
           echo "IMAGE_TAG=${TAG}" >> $GITHUB_ENV
           echo "BRANCH_LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-          echo "::set-output name=image_tag::${TAG}"
-          echo "::set-output name=branch_latest_tag::${LATEST_TAG}"
+
+          echo "image_tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "branch_latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          
           echo "Generated Tag: ${TAG}"
 
   build-and-push:
@@ -37,6 +40,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+    env:
+      IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
+      BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
 
     steps:
       - name: Checkout Repository
@@ -60,8 +67,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ needs.set-build-vars.outputs.branch_latest_tag }}
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ needs.set-build-vars.outputs.image_tag }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ BRANCH_LATEST_TAG }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ IMAGE_TAG }}
           platforms: linux/amd64, linux/arm64
           cache-from: type=registry,ref=${{ secrets.DOCKER_IMAGE_NAME }}:latest
           cache-to: type=inline
@@ -71,13 +78,17 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
 
+    env:
+      IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
+      BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
+
     steps:
       - name: Send Notification to Microsoft Teams
         run: |
           REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **${{ needs.set-build-vars.outputs.image_tag }}**, **${{ needs.set-build-vars.outputs.branch_latest_tag }}** \n
+          - **Tags:** **${IMAGE_TAG}**, **${BRANCH_LATEST_TAG}** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
           - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
