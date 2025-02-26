@@ -15,6 +15,7 @@ ENV SERVER_CPU=2
 ENV SERVER_MEMORY=2048
 ENV PRE_WARM_MIN_CPU=2
 ENV PRE_WARM_MIN_MEMORY=2048
+ENV PRE_WARM_POD_SIZE=2
 
 # Scaling Configuration
 ENV SLEEP_INTERVAL=15
@@ -36,4 +37,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY warm-pool-up-only.py warm-pool-up-down.py ./
 
 # Determine which script to run
-CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}.py"]
+CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}-pod.py"]
