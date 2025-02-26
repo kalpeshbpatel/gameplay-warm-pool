@@ -51,10 +51,11 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Log in to Amazon ECR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ECR_REGISTRY }}
+      - name: Get AWS ECR Login Token
+        run: |
+          ECR_REGISTRY=$(aws ecr get-authorization-token --query 'authorizationData[0].proxyEndpoint' --output text)
+          echo "ECR_REGISTRY=${ECR_REGISTRY}" >> $GITHUB_ENV
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
       - name: Set up QEMU for Multi-Arch Build
         uses: docker/setup-qemu-action@v3
@@ -68,9 +69,9 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.ECR_REGISTRY }}:latest
-            ${{ env.ECR_REGISTRY }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           platforms: |
             linux/amd64
-          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}:latest
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
           cache-to: type=inline
