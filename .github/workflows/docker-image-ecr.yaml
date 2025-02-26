@@ -124,6 +124,9 @@ jobs:
   send-notification:
     runs-on: ubuntu-latest
     needs: [set-build-vars, create-manifest]
+    
+    if: success()
+
     steps:
       - name: Set Environment Variables
         run: |
