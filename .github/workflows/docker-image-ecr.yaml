@@ -130,8 +130,10 @@ jobs:
       - name: Send Notification to Microsoft Teams
         if: success()
         run: |
-          MESSAGE="### 🚀 Multi-Arch Docker Image Successfully Built and Pushed to ECR \n
+          REPO_SERVER="{ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}"
+          MESSAGE="## 🚀 Multi-Arch Docker Image Successfully Built and Pushed to ECR \n
           - Repository: ${{ secrets.ECR_REPOSITORY }} \n
+          - Registry: ${REPO_SERVER} \n
           - Tags: **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
           - Branch: ${{ github.ref_name }} \n
           - Commit: ${{ github.sha }} \n
