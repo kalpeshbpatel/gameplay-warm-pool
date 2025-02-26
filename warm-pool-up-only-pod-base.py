@@ -85,7 +85,7 @@ def calculate_desired_size(pod_count, current_desired_size):
     new_desired_size = math.ceil((pod_count + PRE_WARM_POD_SIZE) / pod_per_server)
     
     if new_desired_size > current_desired_size:
-        logging.info("=== Desired Size Calculation ===")
+        logging.info("=== Desired Size Calculation ===================================")
         logging.info(f"  - Namespace: {NAMESPACE}")
         logging.info(f"  - Pod Prefix: {POD_PREFIX}")
         logging.info(f"  - Pod Count: {pod_count}")
@@ -93,7 +93,7 @@ def calculate_desired_size(pod_count, current_desired_size):
         logging.info(f"  - Pods per Server: {pod_per_server}")
         logging.info(f"  - Current Desired Size: {current_desired_size}")
         logging.info(f"  - Final New Desired Size: {new_desired_size}")
-        logging.info("================================")
+        logging.info("================================================================")
         return new_desired_size
     else:
         logging.info(f"No scaling required. Current desired size ({current_desired_size}) is sufficient.")
@@ -111,7 +111,9 @@ def main():
             # Only scale up, never scale down
             if new_desired_size > current_desired_size:
                 update_eks_nodegroup(new_desired_size)
+                logging.info("================================================================")
                 logging.info("\nWait for 60 Sec...")
+                logging.info("================================================================")
                 time.sleep(60)
 
             time.sleep(SLEEP_INTERVAL)
