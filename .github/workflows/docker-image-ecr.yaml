@@ -49,7 +49,7 @@ jobs:
 
       - name: Get AWS ECR Login Token
         run: |
-          echo "ECR_REGISTRY=${secrets.ECR_REGISTRY}" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=https://${secrets.ECR_REGISTRY}" >> $GITHUB_ENV
           echo "Using ECR Registry: ${ECR_REGISTRY}"
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
 
