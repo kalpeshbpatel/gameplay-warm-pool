@@ -1,4 +1,4 @@
-name: Build and Push Python App Docker Image
+name: Build and Push Python App Docker Image Docker Hub
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Docker Image to HUB
         uses: docker/build-push-action@v5
         with:
           context: .
