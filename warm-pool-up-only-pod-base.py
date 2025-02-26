@@ -27,9 +27,9 @@ POD_PREFIX = os.getenv("POD_PREFIX", "ubuntu")  # Only count pods with this pref
 
 # Resource Limits
 POD_CPU_LIMIT = float(os.getenv("POD_CPU_LIMIT", 0.5))  # CPU limit per pod
-POD_MEMORY_LIMIT = int(os.getenv("POD_MEMORY_LIMIT", 512))  # Memory limit per pod (MB)
-SERVER_CPU = int(os.getenv("SERVER_CPU", 2))  # CPU cores per server
-SERVER_MEMORY = int(os.getenv("SERVER_MEMORY", 2048))  # Memory per server (MB)
+POD_MEMORY_LIMIT = float(os.getenv("POD_MEMORY_LIMIT", 512))  # Memory limit per pod (MB)
+SERVER_CPU = float(os.getenv("SERVER_CPU", 2))  # CPU cores per server
+SERVER_MEMORY = float(os.getenv("SERVER_MEMORY", 2048))  # Memory per server (MB)
 PRE_WARM_POD_SIZE = int(os.getenv("PRE_WARM_POD_SIZE", 2))  # Minimum pods for pre-warming
 
 # Scaling Configuration
