@@ -14,6 +14,8 @@ jobs:
       branch_latest_tag: ${{ steps.vars.outputs.BRANCH_LATEST_TAG }}
     
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
       - name: Get Git and Timestamp Info
         id: vars
         run: |
@@ -30,10 +32,10 @@ jobs:
 
   build-and-push:
     runs-on: ubuntu-latest
-    needs: set-build-vars  # Wait for variables to be set
+    needs: set-build-vars
     strategy:
       matrix:
-        arch: [amd64, arm64]  # Parallel build for both architectures
+        arch: [amd64, arm64]
 
     env:
       BUILD_ID: ${{ needs.set-build-vars.outputs.build_id }}
@@ -78,7 +80,7 @@ jobs:
 
   create-manifest:
     runs-on: ubuntu-latest
-    needs: [set-build-vars, build-and-push]  # Ensure images are built
+    needs: [set-build-vars, build-and-push]
     env:
       BUILD_ID: ${{ needs.set-build-vars.outputs.build_id }}
       BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
