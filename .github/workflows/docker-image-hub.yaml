@@ -70,11 +70,11 @@ jobs:
         run: |
           REPO_SERVER="docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/gameplay-warm-pool"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
-          - Repository: kbpatel/gameplay-warm-pool \n
-          - Tags: **${{ env.IMAGE_TAG }}**, **latest** \n
-          - Branch: ${{ github.ref_name }} \n
-          - Commit: ${{ github.sha }} \n
-          - [GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          - **Repository:** kbpatel/gameplay-warm-pool \n
+          - **Tags:** **${{ env.IMAGE_TAG }}**, **latest** \n
+          - **Branch:** ${{ github.ref_name }} \n
+          - **Commit:** ${{ github.sha }} \n
+          - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           
           PAYLOAD="{\"text\": \"${MESSAGE}\" }"
           

@@ -132,12 +132,12 @@ jobs:
         run: |
           REPO_SERVER="{ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}"
           MESSAGE="## 🚀 Multi-Arch Docker Image Successfully Built and Pushed to ECR \n
-          - Repository: ${{ secrets.ECR_REPOSITORY }} \n
-          - Registry: ${REPO_SERVER} \n
-          - Tags: **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
-          - Branch: ${{ github.ref_name }} \n
-          - Commit: ${{ github.sha }} \n
-          - [GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          - **Repository:** ${{ secrets.ECR_REPOSITORY }} \n
+          - **Registry:** ${REPO_SERVER} \n
+          - **Tags:** **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
+          - **Branch:** ${{ github.ref_name }} \n
+          - **Commit:** ${{ github.sha }} \n
+          - **GitHub Actions Run** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           
           PAYLOAD="{\"text\": \"${MESSAGE}\" }"
           
