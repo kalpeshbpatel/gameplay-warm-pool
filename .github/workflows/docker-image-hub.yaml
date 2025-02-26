@@ -26,9 +26,6 @@ jobs:
           TAG="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
           LATEST_TAG="${BRANCH_NAME}-latest"
           
-          echo "IMAGE_TAG=${TAG}" >> $GITHUB_ENV
-          echo "BRANCH_LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-
           echo "image_tag=${TAG}" >> $GITHUB_OUTPUT
           echo "branch_latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
           
@@ -40,10 +37,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-    env:
-      IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
-      BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
 
     steps:
       - name: Checkout Repository
@@ -62,13 +55,16 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Docker Image
+        env:
+          IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
+          BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ BRANCH_LATEST_TAG }}
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ IMAGE_TAG }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.BRANCH_LATEST_TAG }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           platforms: linux/amd64, linux/arm64
           cache-from: type=registry,ref=${{ secrets.DOCKER_IMAGE_NAME }}:latest
           cache-to: type=inline
@@ -78,12 +74,11 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
 
-    env:
-      IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
-      BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
-
     steps:
       - name: Send Notification to Microsoft Teams
+        env:
+          IMAGE_TAG: ${{ needs.set-build-vars.outputs.image_tag }}
+          BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
         run: |
           REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
