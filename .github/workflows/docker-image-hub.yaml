@@ -7,28 +7,15 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-push:
+  set-build-vars:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      branch_latest_tag: ${{ steps.vars.outputs.branch_latest_tag }}
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      # - name: Run Tests (Optional)
-      #   run: pytest  # Uncomment if you have tests
 
       - name: Get Git and Timestamp Info
         id: vars
@@ -40,7 +27,20 @@ jobs:
           LATEST_TAG="${BRANCH_NAME}-latest"
           echo "IMAGE_TAG=${TAG}" >> $GITHUB_ENV
           echo "BRANCH_LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+          echo "::set-output name=image_tag::${TAG}"
+          echo "::set-output name=branch_latest_tag::${LATEST_TAG}"
           echo "Generated Tag: ${TAG}"
+
+  build-and-push:
+    needs: set-build-vars
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up QEMU for Multi-Arch Build
         uses: docker/setup-qemu-action@v3
@@ -54,27 +54,30 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image to HUB
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.BRANCH_LATEST_TAG }}
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          platforms: |
-            linux/amd64
-            linux/arm64
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ needs.set-build-vars.outputs.branch_latest_tag }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ needs.set-build-vars.outputs.image_tag }}
+          platforms: linux/amd64, linux/arm64
           cache-from: type=registry,ref=${{ secrets.DOCKER_IMAGE_NAME }}:latest
           cache-to: type=inline
-      
+
+  send-notification:
+    needs: create-manifest
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
       - name: Send Notification to Microsoft Teams
-        if: success()
         run: |
           REPO_URL="docker.io/${{ secrets.DOCKER_IMAGE_NAME }}"
           MESSAGE="## 🚀 Docker Image Successfully Built and Pushed \n
           - **Repository:** ${REPO_URL} \n
-          - **Tags:** **${{ env.IMAGE_TAG }}**, **${{ env.BRANCH_LATEST_TAG }}** \n
+          - **Tags:** **${{ needs.set-build-vars.outputs.image_tag }}**, **${{ needs.set-build-vars.outputs.branch_latest_tag }}** \n
           - **Branch:** ${{ github.ref_name }} \n
           - **Commit:** ${{ github.sha }} \n
           - **GitHub Actions Run:** (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
