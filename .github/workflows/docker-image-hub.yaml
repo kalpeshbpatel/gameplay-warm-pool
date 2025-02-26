@@ -58,7 +58,7 @@ jobs:
 
       - name: Build and Push Docker Image
         env:
-          IMAGE_TAG: ${{ needs.set-build-vars.outputs.build_id }}
+          BUILD_ID: ${{ needs.set-build-vars.outputs.build_id }}
           BRANCH_LATEST_TAG: ${{ needs.set-build-vars.outputs.branch_latest_tag }}
         uses: docker/build-push-action@v5
         with:
