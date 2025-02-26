@@ -9,10 +9,10 @@ on:
 jobs:
   set-build-vars:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    outputs:
+      build_id: ${{ steps.vars.outputs.BUILD_ID }}
+      branch_latest_tag: ${{ steps.vars.outputs.BRANCH_LATEST_TAG }}
+    
     steps:
       - name: Get Git and Timestamp Info
         id: vars
