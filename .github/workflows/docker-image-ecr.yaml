@@ -126,3 +126,19 @@ jobs:
             ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:arm64-${BUILD_ID}
 
           docker manifest push ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${BRANCH_LATEST_TAG}
+
+      - name: Send Notification to Microsoft Teams
+        if: success()
+        run: |
+          MESSAGE="### 🚀 Multi-Arch Docker Image Successfully Built and Pushed to ECR \n
+          - Repository: ${{ secrets.ECR_REPOSITORY }} \n
+          - Tags: **${BUILD_ID}**, **${BRANCH_LATEST_TAG}** \n
+          - Branch: ${{ github.ref_name }} \n
+          - Commit: ${{ github.sha }} \n
+          - [GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          
+          PAYLOAD="{\"text\": \"${MESSAGE}\" }"
+          
+          curl -H "Content-Type: application/json" \
+               -d "${PAYLOAD}" \
+               ${{ secrets.TEAMS_WEBHOOK_URL }}
