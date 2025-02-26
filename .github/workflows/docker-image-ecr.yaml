@@ -67,12 +67,22 @@ jobs:
         with:
           install: true
 
+      - name: Cache Docker Buildx Layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ matrix.arch }}-
+
       - name: Build and Push Docker Image for ${{ matrix.arch }}
         run: |
           ARCH="${{ matrix.arch }}"
           docker buildx build --load --platform linux/${ARCH} . \
             -t ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${ARCH}-${BUILD_ID} \
-            --build-arg ARCH=${ARCH}
+            --build-arg ARCH=${ARCH} \
+            --cache-from=type=registry,ref=${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:cache-${ARCH} \
+            --cache-to=type=registry,ref=${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:cache-${ARCH},mode=max
 
           docker push ${ECR_REGISTRY}/${{ secrets.ECR_REPOSITORY }}:${ARCH}-${BUILD_ID}
 
