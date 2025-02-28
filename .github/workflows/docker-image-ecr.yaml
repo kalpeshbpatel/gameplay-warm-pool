@@ -26,7 +26,7 @@ jobs:
           TIMESTAMP=$(date +%s)  # Generate timestamp ONCE
           BUILD_ID="${BRANCH_NAME}-${SHORT_SHA}-${TIMESTAMP}"
           BRANCH_LATEST_TAG="${BRANCH_NAME}-latest"
-          ECR_REGISTRY="148761651852.dkr.ecr.ap-south-1.amazonaws.com"
+          ECR_REGISTRY="300906349855.dkr.ecr.ap-south-1.amazonaws.com"
 
           echo "BUILD_ID=${BUILD_ID}" >> $GITHUB_ENV
           echo "BRANCH_LATEST_TAG=${BRANCH_LATEST_TAG}" >> $GITHUB_ENV
