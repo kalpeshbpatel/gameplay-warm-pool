@@ -25,6 +25,6 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@master
         with:
           args: >
-            -Dsonar.projectKey=your_project_key
+            -Dsonar.projectKey=gameplay-warm-pool
             -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
