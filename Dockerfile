@@ -34,7 +34,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Script
-COPY warm-pool-up-only-resource-base.py warm-pool-up-down-resource-base.py warm-pool-up-only-pod-base.py ./
+COPY app.py ./
 
 # Determine which script to run
-CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}-pod-base.py"]
+CMD ["sh", "-c", "python app.py"]
