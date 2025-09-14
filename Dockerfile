@@ -21,8 +21,7 @@ ENV PRE_WARM_POD_SIZE=2
 ENV SLEEP_INTERVAL=15
 ENV SCALE_DOWN_WAIT_TIME=120
 
-# Set build argument for script selection
-ENV SCRIPT_MODE=up-only
+ENV USE_EC2_COUNT=true
 
 # Set working directory
 WORKDIR /app
