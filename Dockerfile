@@ -21,8 +21,7 @@ ENV PRE_WARM_POD_SIZE=2
 ENV SLEEP_INTERVAL=15
 ENV SCALE_DOWN_WAIT_TIME=120
 
-# Set build argument for script selection
-ENV SCRIPT_MODE=up-only
+ENV USE_EC2_COUNT=true
 
 # Set working directory
 WORKDIR /app
@@ -34,7 +33,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Script
-COPY warm-pool-up-only-resource-base.py warm-pool-up-down-resource-base.py warm-pool-up-only-pod-base.py ./
+COPY app.py ./
 
 # Determine which script to run
-CMD ["sh", "-c", "python warm-pool-${SCRIPT_MODE}-pod-base.py"]
+CMD ["sh", "-c", "python app.py"]
